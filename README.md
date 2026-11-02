@@ -41,9 +41,10 @@ Lo mismo que AnyDesk o TeamViewer en lo importante, porque por dentro usa [RustD
   - Solo sirven para encontrar al otro equipo y, cuando no hay conexión directa, para retransmitir.
   - Desde 2026 piden que el equipo que controla inicie sesión con una cuenta gratis de RustDesk.
   - RustDesk los describe como de demostración: pueden ir lentos o cambiar sus reglas.
-- **Para no depender de nadie:**
-  - Tailscale + conexión directa por IP (gratis).
-  - O un servidor RustDesk propio (hbbs/hbbr) en una VPS gratis.
+- **Desde nov-2026 los servidores públicos rechazan conexiones sin cuenta** («The connection is not allowed»). Por eso Emm Remote usa:
+  - **Tailscale** (red privada gratis, atraviesa CGNAT, sin abrir puertos) en cada equipo.
+  - **Conexión directa por IP** en RustDesk: en el campo de ID se escribe la IP de Tailscale del equipo (`100.x.y.z`).
+  - Firewall de Windows: puerto 21118 abierto solo para Tailscale (`100.64.0.0/10`) y la red local.
 
 ## Seguridad
 
