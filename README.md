@@ -8,9 +8,15 @@ Solo para equipos propios o con permiso explícito.
 
 | Equipo | Qué hacer |
 | --- | --- |
-| Windows | Doble clic en **`Instalar Emm Remote - Windows.cmd`** y acepta el permiso de administrador |
+| Windows | Abre PowerShell (`Win + X` > Terminal), pega el comando de abajo y acepta el permiso de administrador |
 | Mac | Doble clic en **`Instalar Emm Remote - Mac.command`** |
 | Celular | Instala **RustDesk** desde App Store o Google Play |
+
+Comando para Windows (lo descarga en tu escritorio, aunque OneDrive lo haya movido, y lo abre):
+
+```powershell
+$d=[Environment]::GetFolderPath('Desktop'); $f="$d\Instalar Emm Remote.cmd"; irm "https://raw.githubusercontent.com/xG0ta/emm-remote/main/Instalar%20Emm%20Remote%20-%20Windows.cmd" -OutFile $f; Start-Process $f
+```
 
 El instalador descarga RustDesk oficial y verifica su firma antes de instalarlo. En Mac te guía con los permisos de pantalla y teclado. Te pregunta si quieres acceso desatendido y al final te muestra el ID del equipo.
 

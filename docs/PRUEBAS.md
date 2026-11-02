@@ -5,8 +5,12 @@ Ve marcando cada paso con ✅ o ❌. Si algo falla, toma una captura del mensaje
 ## 0. Instalar
 
 **Windows (laptop RTX 4060)**
-1. Descarga `Instalar Emm Remote - Windows.cmd`: en GitHub, abre el archivo y da clic en el botón de descarga (Download raw file).
-2. Dale doble clic. Si Windows dice «Windows protegió tu PC», da clic en **Más información > Ejecutar de todas formas**. Ese aviso sale porque el archivo `.cmd` no está firmado. RustDesk sí está firmado y el instalador lo verifica.
+1. Abre PowerShell (`Win + X` > Terminal), pega esto y presiona Enter:
+   ```powershell
+   $d=[Environment]::GetFolderPath('Desktop'); $f="$d\Instalar Emm Remote.cmd"; irm "https://raw.githubusercontent.com/xG0ta/emm-remote/main/Instalar%20Emm%20Remote%20-%20Windows.cmd" -OutFile $f; Start-Process $f
+   ```
+   No lo bajes desde el navegador: GitHub lo muestra como texto en vez de descargarlo.
+2. Se abre la ventana del instalador.
 3. Acepta el permiso de administrador.
 4. Contesta si quieres acceso desatendido. Al final anota el **ID**.
    - ✅ Aparece «Firma oficial verificada», el acceso «Emm Remote» queda en el escritorio y se muestra un ID.
