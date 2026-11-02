@@ -34,6 +34,17 @@ Lo mismo que AnyDesk o TeamViewer en lo importante, porque por dentro usa [RustD
 - Controlar desde el celular.
 - Funciona fuera de casa sin abrir puertos ni tener servidor: usa los servidores públicos y gratis de RustDesk para encontrar al otro equipo. La sesión va cifrada de punta a punta, así que esos servidores no ven tu pantalla.
 
+## ¿Tiene límite de tiempo?
+
+- **La app no tiene límite de tiempo de sesión** y no tiene el aviso de «uso comercial» que corta a AnyDesk o TeamViewer gratis.
+- **Los servidores públicos de RustDesk:**
+  - Solo sirven para encontrar al otro equipo y, cuando no hay conexión directa, para retransmitir.
+  - Desde 2026 piden que el equipo que controla inicie sesión con una cuenta gratis de RustDesk.
+  - RustDesk los describe como de demostración: pueden ir lentos o cambiar sus reglas.
+- **Para no depender de nadie:**
+  - Tailscale + conexión directa por IP (gratis).
+  - O un servidor RustDesk propio (hbbs/hbbr) en una VPS gratis.
+
 ## Seguridad
 
 - Cada conexión necesita una de dos cosas: el código temporal que cambia en cada sesión, o que alguien la acepte en el equipo controlado.
