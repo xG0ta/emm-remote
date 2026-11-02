@@ -1,71 +1,52 @@
-# Pruebas de Emm Remote (versión 0.1)
+# Pruebas de Emm Remote
 
-La prueba se hace entre la Mac Intel y la laptop Windows. Ve marcando cada paso.
+Ve marcando cada paso con ✅ o ❌. Si algo falla, toma una captura del mensaje.
 
-## 0. Preparar las dos computadoras
+## 0. Instalar
 
-**Windows** (PowerShell como administrador, desde la carpeta del repo):
+**Windows (laptop RTX 4060)**
+1. Descarga `Instalar Emm Remote - Windows.cmd`: en GitHub, abre el archivo y da clic en el botón de descarga (Download raw file).
+2. Dale doble clic. Si Windows dice «Windows protegió tu PC», da clic en **Más información > Ejecutar de todas formas**. Ese aviso sale porque el archivo `.cmd` no está firmado. RustDesk sí está firmado y el instalador lo verifica.
+3. Acepta el permiso de administrador.
+4. Contesta si quieres acceso desatendido. Al final anota el **ID**.
+   - ✅ Aparece «Firma oficial verificada», el acceso «Emm Remote» queda en el escritorio y se muestra un ID.
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\windows\instalar-emm-remote.ps1
-```
+**Mac Intel**
+1. En Finder, abre `Proyectos/emm-acceso-remoto` y dale doble clic a `Instalar Emm Remote - Mac.command`.
+2. Activa RustDesk en Grabación de pantalla y en Accesibilidad cuando te lo pida. Si no aparece en la lista, agrégalo con el botón +.
+3. Contesta si quieres acceso desatendido y anota el **ID**.
+   - ✅ Aparece «Firma de Apple verificada» y se muestra un ID.
 
-**Mac**: doble clic en `scripts/mac/instalar-emm-remote.command`. Si macOS no te deja abrirlo, córrelo en Terminal:
+**Celular**: instala RustDesk desde la tienda oficial.
 
-```bash
-bash scripts/mac/instalar-emm-remote.command
-```
+## 1. En casa, aceptando a mano
 
-En la Mac, activa RustDesk en **Ajustes del Sistema > Privacidad y seguridad > Grabación de pantalla** y también en **Accesibilidad**. Luego cierra RustDesk y vuelve a abrirlo.
+1. En la Mac, abre RustDesk y escribe el ID de la PC Windows en «Controlar escritorio remoto». Dale a Conectar.
+2. Escribe la contraseña de un solo uso que se ve en la ventana de la PC, o acepta la conexión en la PC.
+   - ✅ Ves la pantalla de Windows y puedes mover el mouse y escribir.
+   - ✅ En Windows se ve la ventana de RustDesk con el nombre del equipo conectado y un botón para desconectar.
+3. Haz lo mismo al revés: desde Windows, conéctate al ID de la Mac.
+4. Copia texto en un equipo y pégalo en el otro. Manda un archivo con el ícono de carpeta de la barra de arriba.
 
-Al final, cada script imprime la **IP en la red de casa** y la **IP de Tailscale** (empieza con `100.`). Anótalas.
+## 2. Fuera de casa
 
-## 1. Casa, con aceptación manual (lo mínimo)
+1. Pon el celular en datos móviles, sin Wi‑Fi.
+2. En RustDesk del celular, escribe el ID de la PC o de la Mac y conéctate.
+   - ✅ Ves la pantalla y la controlas con toques. El teclado está en la barra de abajo.
 
-1. Las dos computadoras deben estar en el mismo Wi‑Fi.
-2. En la Mac, abre RustDesk y escribe en «Controlar escritorio remoto» la **IP de casa** de la PC Windows, por ejemplo `192.168.1.70`. Dale a Conectar.
-3. En Windows aparece la ventana de RustDesk que pide aceptar la conexión. Acéptala.
-   - ✅ Debes ver la pantalla de Windows en la Mac y poder mover el mouse y escribir.
-   - ✅ Mientras dure la sesión, Windows debe mostrar la ventana de RustDesk con el nombre del equipo conectado y un botón para desconectar.
-4. Haz la prueba al revés: desde Windows, conéctate a la IP de casa de la Mac.
-5. Prueba también copiar y pegar texto entre las dos y mandar un archivo (ícono de carpeta en la barra de arriba).
+## 3. Acceso desatendido (solo si lo activaste)
 
-Si no conecta: revisa que «Habilitar acceso directo por IP» esté activo en **Ajustes > Seguridad** de la computadora a la que te conectas.
+1. Que nadie toque la computadora controlada.
+2. Desde otro equipo, conéctate a su ID y escribe la contraseña permanente que pusiste en el instalador.
+   - ✅ Entra sin que alguien acepte.
+   - ✅ Aun así, en la computadora controlada se ve la ventana de la sesión con el botón de desconectar.
+3. En la Mac, si quieres entrar aunque no hayas iniciado sesión en ella (pantalla de inicio de sesión), RustDesk te pedirá instalar su servicio. Acéptalo.
 
-## 2. Bloqueo de IP desconocidas
+## 4. Desconectar
 
-1. En la computadora controlada, abre **Ajustes > Seguridad > Lista blanca de IP**. Debe decir `100.64.0.0/10,fd7a:115c:a1e0::/48,192.168.0.0/16`.
-2. Si quieres comprobar que funciona, borra temporalmente `192.168.0.0/16` e intenta conectarte por la IP de casa.
-   - ✅ Debe salir «Your ip is blocked by the peer». Al terminar, vuelve a dejar la lista completa.
-
-## 3. Fuera de casa (Tailscale)
-
-1. Inicia sesión en Tailscale con **la misma cuenta** en la Mac, en Windows y en el celular.
-2. Repite la prueba 1 usando la **IP de Tailscale** (`100.x.y.z`) en vez de la de casa.
-3. Prueba real: conecta el celular a datos móviles (sin Wi‑Fi) o pide prestado otro internet, y conéctate desde ahí.
-   - ✅ Debe conectarse aunque tu Infinitum esté detrás de CGNAT. Tailscale lo atraviesa por su cuenta.
-
-## 4. Desde el celular
-
-1. Instala en el celular **RustDesk** y **Tailscale**, las dos desde la tienda oficial.
-2. Enciende Tailscale en el celular.
-3. En RustDesk, escribe la IP de Tailscale de la PC o de la Mac y conéctate.
-   - ✅ Debes ver la pantalla y controlarla con toques. El teclado está en la barra de abajo.
-
-## 5. Acceso desatendido (opcional, configúralo en cada equipo)
-
-Solo hazlo en los equipos que quieras controlar sin que nadie acepte.
-
-1. En ese equipo, abre RustDesk > **Ajustes > Seguridad > Contraseña**:
-   - Elige «Usar contraseña permanente» y pon una contraseña **fuerte y única**, de 16 caracteres o más. Guárdala en tu gestor de contraseñas o en el llavero.
-   - En «Aceptar sesiones», elige «Por contraseña».
-2. Deja **apagada** cualquier opción para ocultar la ventana de conexión (por ejemplo «Ocultar ventana de gestión de conexiones»). La ventana debe verse siempre durante una sesión.
-3. Para entrar a la Mac aunque no hayas iniciado sesión en ella, en RustDesk de la Mac dale a **Instalar/Iniciar servicio** cuando lo ofrezca.
-   - ✅ Desde el otro equipo, la conexión entra pidiendo la contraseña, sin que alguien acepte.
-   - ✅ Del lado controlado, la ventana de RustDesk sigue mostrando que hay una sesión.
-
-> Dónde queda guardada la contraseña: RustDesk la cifra y la guarda en su archivo de configuración, en ese equipo. No usa el llavero de Mac ni el Administrador de credenciales de Windows, y este repo nunca la ve. La protegen la lista blanca (solo Tailscale y tu red de casa) y tu cuenta de Tailscale. Activa la verificación en dos pasos en esa cuenta.
+1. Durante una sesión, en la computadora controlada, da clic en **Desconectar** en la ventana de RustDesk.
+   - ✅ La sesión se corta al momento del otro lado.
 
 ## Qué reportar
 
-Para cada prueba: ✅ o ❌ y, si falla, una captura del mensaje. También dime cómo se siente la fluidez: buena, aceptable o lenta.
+El ✅ o ❌ de cada paso. Y cómo se siente la fluidez en casa y fuera de casa: buena, aceptable o lenta.

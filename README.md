@@ -1,38 +1,44 @@
 # Emm Remote
 
-Control remoto de mis propias computadoras (Mac, Windows y celular), como AnyDesk pero
-con piezas gratis y de código abierto. Solo para equipos propios o con permiso explícito.
+Control remoto de mis propias computadoras (Mac, Windows y celular), como AnyDesk:
+abres la app, ves un **ID**, y desde otro equipo escribes ese ID para ver y controlar.
+Solo para equipos propios o con permiso explícito.
 
-## Cómo está armado (versión 0.1)
+## Instalar (un clic)
 
-```text
-Celular / Mac / Windows  --RustDesk, cifrado de punta a punta-->  Equipo controlado
-          \__________ Tailscale (red privada cifrada, atraviesa CGNAT) _________/
-```
+| Equipo | Qué hacer |
+| --- | --- |
+| Windows | Doble clic en **`Instalar Emm Remote - Windows.cmd`** y acepta el permiso de administrador |
+| Mac | Doble clic en **`Instalar Emm Remote - Mac.command`** |
+| Celular | Instala **RustDesk** desde App Store o Google Play |
 
-- **[RustDesk](https://github.com/rustdesk/rustdesk)** (AGPL-3.0) se encarga de la pantalla, el mouse, el teclado, el portapapeles y los archivos. Usa la versión oficial firmada.
-- **[Tailscale](https://tailscale.com)** (gratis para uso personal) une tus equipos en una red privada. Así no necesitas abrir puertos en el módem ni tener un servidor encendido.
-- Conexión **directa por IP** (puerto 21118) con **lista blanca**: solo se aceptan conexiones desde Tailscale (`100.64.0.0/10`, `fd7a:115c:a1e0::/48`) y desde tu red de casa (`192.168.0.0/16`).
+El instalador descarga RustDesk oficial y verifica su firma antes de instalarlo. En Mac te guía con los permisos de pantalla y teclado. Te pregunta si quieres acceso desatendido y al final te muestra el ID del equipo.
+
+Para probarlo paso a paso: [docs/PRUEBAS.md](docs/PRUEBAS.md).
+
+## Qué puede hacer
+
+Lo mismo que AnyDesk o TeamViewer en lo importante, porque por dentro usa [RustDesk](https://github.com/rustdesk/rustdesk) (código abierto, AGPL-3.0):
+
+- Ver y controlar la pantalla con mouse y teclado, con varios monitores y ajuste de calidad o fluidez.
+- Copiar y pegar entre equipos, y mandar archivos en los dos sentidos.
+- Chat, audio de la otra computadora y grabación de la sesión.
+- Acceso desatendido con contraseña permanente (opcional).
+- Equipos recientes y favoritos, y descubrimiento en la red de casa.
+- Controlar desde el celular.
+- Funciona fuera de casa sin abrir puertos ni tener servidor: usa los servidores públicos y gratis de RustDesk para encontrar al otro equipo. La sesión va cifrada de punta a punta, así que esos servidores no ven tu pantalla.
 
 ## Seguridad
 
-- El cifrado es de punta a punta (RustDesk) y además va por dentro de Tailscale (WireGuard).
-- Por defecto, cada conexión se acepta a mano en el equipo controlado, o se entra con la contraseña temporal que cambia en cada sesión.
-- El acceso desatendido es **opcional** y se activa en el propio equipo, con una contraseña permanente fuerte. Ni los scripts ni el repo guardan contraseñas.
-- Mientras haya una sesión, RustDesk muestra su ventana en el equipo controlado, con el nombre del que se conectó y un botón para desconectar. No se oculta ni se desactiva.
-- Nada de evadir el antivirus: se usan los instaladores oficiales y firmados.
-
-## Uso
-
-1. Prepara cada computadora:
-   - Windows: `scripts/windows/instalar-emm-remote.ps1` (PowerShell como administrador)
-   - Mac: `scripts/mac/instalar-emm-remote.command`
-2. Sigue [docs/PRUEBAS.md](docs/PRUEBAS.md): primero en la red de casa, luego con Tailscale y luego desde el celular.
+- Cada conexión necesita una de dos cosas: el código temporal que cambia en cada sesión, o que alguien la acepte en el equipo controlado.
+- El acceso desatendido es **opcional**. Se activa en el propio equipo con una contraseña de 12 caracteres o más, escrita en el instalador sin que se vea. RustDesk la guarda cifrada en su configuración local. Ni el instalador ni el repo la guardan.
+- La ventana de conexión **siempre se ve** en el equipo controlado mientras dura una sesión, con un botón para desconectar. El instalador deja apagada la opción de ocultarla.
+- Solo se instalan programas oficiales y firmados. Nada se oculta ni evade al antivirus.
 
 ## Próximas fases
 
-1. **Marca Emm:** compilar RustDesk con el nombre «Emm Remote», tu ícono y las opciones de arriba ya incluidas. Se hace con un fork y GitHub Actions, gratis. Por la licencia AGPL, el código del fork debe ser público.
-2. **Servidor propio** (hbbs/hbbr), opcional, para conectarte por ID sin Tailscale. Puede vivir en una VPS gratis.
-3. **Encender la PC a distancia** (Wake-on-LAN por Tailscale desde otro equipo de la red, o Wake-on-WAN si el módem lo permite).
+1. **App con marca propia:** compilar RustDesk como «Emm Remote», con tu ícono y la configuración incluida. Se hace con un fork y GitHub Actions, gratis. Por la licencia AGPL, el código debe ser público, y sin certificados de firma aparecen avisos de «desarrollador no identificado».
+2. **Servidor propio** (hbbs/hbbr), opcional, para no depender de los servidores públicos.
+3. **Encender la PC a distancia** (Wake-on-LAN).
 
 El diseño original de una app propia en Python + WebRTC quedó en [docs/diseno-mvp-python.md](docs/diseno-mvp-python.md). Nunca se programó.
