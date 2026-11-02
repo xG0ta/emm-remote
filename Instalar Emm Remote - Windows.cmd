@@ -51,7 +51,8 @@ if (Test-Path $Exe) {
     }
     Write-Host 'Firma oficial verificada.' -ForegroundColor Green
     Write-Host 'Instalando (tarda menos de un minuto)…'
-    Start-Process -FilePath $tmp -ArgumentList '--silent-install' -Wait
+    # Sin -Wait: el instalador deja RustDesk abierto y -Wait esperaría para siempre
+    Start-Process -FilePath $tmp -ArgumentList '--silent-install'
     for ($i = 0; $i -lt 90 -and -not (Test-Path $Exe); $i++) { Start-Sleep 2 }
     if (-not (Test-Path $Exe)) { throw 'La instalación no terminó. Vuelve a correr este instalador.' }
     Start-Sleep 5
