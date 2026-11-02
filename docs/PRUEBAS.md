@@ -32,6 +32,17 @@ Ve marcando cada paso con ✅ o ❌. Si algo falla, toma una captura del mensaje
 3. Haz lo mismo al revés: desde Windows, conéctate al ID de la Mac.
 4. Copia texto en un equipo y pégalo en el otro. Manda un archivo con el ícono de carpeta de la barra de arriba.
 
+
+## 1b. Conexión por Tailscale (la que usa Emm Remote)
+
+Los servidores públicos de RustDesk ya no dejan conectarse sin cuenta. Por eso la conexión va por Tailscale.
+
+1. Instala Tailscale en los dos equipos e inicia sesión con **la misma cuenta**. En Mac hay que aprobar la VPN y la extensión de sistema.
+2. En el equipo que vas a controlar, abre RustDesk > Ajustes > Seguridad y activa «Habilitar acceso directo por IP».
+3. Para el acceso desatendido, en ese mismo equipo pon una **contraseña permanente** fuerte.
+4. En el otro equipo, escribe en RustDesk la **IP de Tailscale** del equipo controlado (`100.x.y.z`) y escribe la contraseña. Marca «Recordar contraseña» para que las siguientes veces entre con un clic.
+   - ✅ Probado el 2-nov-2026: la Mac llegó a la PC por Tailscale y RustDesk pidió la contraseña, sin pasar por los servidores públicos. Falta probar la sesión completa.
+
 ## 2. Fuera de casa
 
 1. Pon el celular en datos móviles, sin Wi‑Fi.
