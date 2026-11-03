@@ -17,6 +17,7 @@ struct EmmRemoteApp: App {
                 Menu(e.nombre) {
                     Button("Conectar") { almacen.conectar(e) }
                     Button("Archivos") { almacen.archivos(e) }
+                    if almacen.sesiones[e.id] != nil { Button("Desconectar") { almacen.desconectar(e) } }
                     Button("Despertar") { almacen.despertar(e) }.disabled(e.mac.isEmpty)
                 }
             }
@@ -129,10 +130,15 @@ struct Tarjeta: View {
                 .help(equipo.mac.isEmpty ? "Agrega la MAC del equipo para encenderlo" : "Encender el equipo (Wake-on-LAN)")
             Button("Archivos") { almacen.archivos(equipo) }
                 .disabled(estado != .enLinea)
-            Button("Conectar") { almacen.conectar(equipo) }
-                .buttonStyle(.borderedProminent).tint(colorEmm)
-                .keyboardShortcut(.defaultAction)
-                .disabled(estado != .enLinea)
+            if almacen.sesiones[equipo.id] != nil {
+                Button("Desconectar") { almacen.desconectar(equipo) }
+                    .buttonStyle(.borderedProminent).tint(.gray)
+            } else {
+                Button("Conectar") { almacen.conectar(equipo) }
+                    .buttonStyle(.borderedProminent).tint(colorEmm)
+                    .keyboardShortcut(.defaultAction)
+                    .disabled(estado != .enLinea)
+            }
             Menu {
                 Button("Editar…", action: editar)
                 Divider()
@@ -155,6 +161,7 @@ struct Tarjeta: View {
     }
 
     private var textoEstado: String {
+        if almacen.sesiones[equipo.id] != nil { return "Conectado · sesión abierta" }
         switch estado {
         case .enLinea: return "En línea"
         case .revisando: return "Revisando…"

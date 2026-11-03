@@ -9,6 +9,21 @@ enum NSWorkspaceAbrir {
     }
 }
 
+extension Red {
+    /// Ventanas normales de un proceso, aunque estén minimizadas o en otro escritorio
+    /// (no requiere permisos especiales).
+    static func ventanas(pid: Int32) -> Int {
+        guard let lista = CGWindowListCopyWindowInfo([.optionAll, .excludeDesktopElements], kCGNullWindowID)
+                as? [[String: Any]] else { return 0 }
+        return lista.filter { w in
+            guard (w[kCGWindowOwnerPID as String] as? Int32) == pid,
+                  (w[kCGWindowLayer as String] as? Int) == 0,
+                  let b = w[kCGWindowBounds as String] as? [String: CGFloat] else { return false }
+            return (b["Height"] ?? 0) > 100 && (b["Width"] ?? 0) > 100
+        }.count
+    }
+}
+
 /// Utilidades de red sin dependencias: interfaces, prueba de puerto y Wake-on-LAN.
 enum Red {
     struct Interfaz { let ip: in_addr_t; let mascara: in_addr_t; let difusion: in_addr_t? }

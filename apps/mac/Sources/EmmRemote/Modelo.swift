@@ -45,6 +45,8 @@ final class Almacen: ObservableObject {
     @Published var estados: [UUID: Estado] = [:]
     @Published var tailscaleIP: String? = nil
     @Published var aviso: String? = nil
+    /// Sesiones abiertas (control o archivos) por equipo: el proceso de RustDesk que muestra la ventana.
+    @Published var sesiones: [UUID: Process] = [:]
 
     private let archivo: URL = {
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -96,7 +98,7 @@ final class Almacen: ObservableObject {
 
     func conectar(_ e: Equipo) {
         pantallaAjustable(e.direccion)
-        abrirRustDesk(["--connect", e.direccion])
+        abrirRustDesk(["--connect", e.direccion], equipo: e)
     }
 
     /// RustDesk recuerda por equipo la escala «original» (la PC se ve chica en ventana grande):
@@ -109,9 +111,16 @@ final class Almacen: ObservableObject {
         try? texto.replacingOccurrences(of: "view_style = 'original'", with: "view_style = 'adaptive'")
             .write(to: archivo, atomically: true, encoding: .utf8)
     }
-    func archivos(_ e: Equipo) { abrirRustDesk(["--file-transfer", e.direccion]) }
+    func archivos(_ e: Equipo) { abrirRustDesk(["--file-transfer", e.direccion], equipo: e) }
 
-    private func abrirRustDesk(_ args: [String]) {
+    /// Termina la sesión: cierra la ventana de la PC y RustDesk sale del Dock.
+    func desconectar(_ e: Equipo) {
+        sesiones[e.id]?.terminate()
+        sesiones[e.id] = nil
+    }
+
+    private func abrirRustDesk(_ args: [String], equipo e: Equipo) {
+        if let previa = sesiones[e.id], previa.isRunning { previa.terminate() }
         let bin = URL(fileURLWithPath: "/Applications/RustDesk.app/Contents/MacOS/RustDesk")
         guard FileManager.default.isExecutableFile(atPath: bin.path) else {
             aviso = "No encuentro RustDesk en Aplicaciones. Instálalo con «Instalar Emm Remote - Mac.command»."
@@ -120,7 +129,32 @@ final class Almacen: ObservableObject {
         let p = Process()
         p.executableURL = bin
         p.arguments = args
-        do { try p.run() } catch { aviso = "No pude abrir RustDesk: \(error.localizedDescription)" }
+        do { try p.run() } catch { aviso = "No pude abrir RustDesk: \(error.localizedDescription)"; return }
+        sesiones[e.id] = p
+        vigilarSesion(p, equipo: e.id)
+    }
+
+    /// RustDesk deja su proceso abierto (y su ícono en el Dock) aunque cierres la ventana de la PC.
+    /// Contamos sus ventanas (la principal escondida + la de la sesión): cuando baja del máximo
+    /// visto, cerraste la de la sesión y terminamos el proceso.
+    private func vigilarSesion(_ p: Process, equipo id: UUID) {
+        let pid = p.processIdentifier
+        Task.detached {
+            var maximo = 0
+            let inicio = Date()
+            while p.isRunning {
+                try? await Task.sleep(nanoseconds: 1_500_000_000)
+                let n = Red.ventanas(pid: pid)
+                maximo = max(maximo, n)
+                if (maximo > 0 && n < maximo) || (maximo == 0 && Date().timeIntervalSince(inicio) > 60) {
+                    p.terminate()
+                    break
+                }
+            }
+            await MainActor.run {
+                if self.sesiones[id] === p { self.sesiones[id] = nil }
+            }
+        }
     }
 
     func despertar(_ e: Equipo) {
