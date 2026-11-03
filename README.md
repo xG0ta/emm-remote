@@ -46,6 +46,23 @@ Lo mismo que AnyDesk o TeamViewer en lo importante, porque por dentro usa [RustD
   - **Conexión directa por IP** en RustDesk: en el campo de ID se escribe la IP de Tailscale del equipo (`100.x.y.z`).
   - Firewall de Windows: puerto 21118 abierto solo para Tailscale (`100.64.0.0/10`) y la red local.
 
+## App «Emm Remote» (Mac)
+
+Un lanzador propio encima de RustDesk: muestra tus equipos, si están en línea y botones **Conectar**, **Archivos** y **Despertar**. También vive en la barra de menú.
+
+- Compilar e instalar: `bash apps/mac/construir.sh --instalar` → `/Applications/Emm Remote.app`
+- Tus equipos se guardan en `~/Library/Application Support/Emm Remote/equipos.json` (no se suben a Git).
+- **Conectar / Archivos** abren RustDesk directo al equipo (`--connect` / `--file-transfer`). Si guardaste la contraseña en RustDesk («Recordar contraseña»), entra con un clic.
+- **En línea** = RustDesk responde en el puerto 21118 por Tailscale. Arriba se ve si Tailscale de la Mac está conectado.
+
+### Encendido remoto (Wake-on-LAN)
+
+**Despertar** envía el «paquete mágico» a la MAC del equipo (a todas las redes locales de la Mac, puertos 9 y 7).
+
+- **Funciona cuando la Mac está en la misma red** que el equipo apagado.
+- **Desde fuera de casa no llega:** un equipo apagado no está en Tailscale y el módem no reenvía la señal. Para eso hace falta algo encendido en la casa (un celular viejo o una Raspberry Pi con Tailscale que reenvíe la señal) o un enchufe inteligente + en el BIOS «Restore on AC power loss = Power On».
+- La MAC se ve en Windows con `getmac /v` (la de la tarjeta por cable; Wake-on-LAN por Wi-Fi casi nunca funciona).
+
 ## Seguridad
 
 - Cada conexión necesita una de dos cosas: el código temporal que cambia en cada sesión, o que alguien la acepte en el equipo controlado.
