@@ -58,10 +58,11 @@ Un lanzador propio encima de RustDesk: muestra tus equipos, si están en línea 
 
 ### Encendido remoto (Wake-on-LAN)
 
-**Despertar** envía el «paquete mágico» a la MAC del equipo (a todas las redes locales de la Mac, puertos 9 y 7).
+**Despertar** envía el «paquete mágico» a la MAC del equipo: a todas las redes locales de la Mac (puertos 9 y 7) y, por internet, a la IP pública de la casa del equipo (puerto UDP configurable, 9 por omisión).
 
-- **Funciona cuando la Mac está en la misma red** que el equipo apagado.
-- **Desde fuera de casa no llega:** un equipo apagado no está en Tailscale y el módem no reenvía la señal. Para eso hace falta algo encendido en la casa (un celular viejo o una Raspberry Pi con Tailscale que reenvíe la señal) o un enchufe inteligente + en el BIOS «Restore on AC power loss = Power On».
+- **En la misma red** que el equipo apagado funciona sin configurar nada más.
+- **Desde fuera de casa** hace falta abrir el puerto UDP en el módem hacia la PC. Guía paso a paso: [`docs/ENCENDIDO-REMOTO.md`](docs/ENCENDIDO-REMOTO.md). La app aprende sola la IP pública de la casa mientras el equipo está en línea con Tailscale (o se escribe un nombre DDNS).
+- Si el módem no lo permite: un aparato siempre encendido en casa (celular viejo o Raspberry Pi con Tailscale) o enchufe inteligente + «Restore on AC power loss».
 - La MAC se ve en Windows con `getmac /v` (la de la tarjeta por cable; Wake-on-LAN por Wi-Fi casi nunca funciona).
 
 ## Seguridad

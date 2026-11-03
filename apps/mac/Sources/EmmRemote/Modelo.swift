@@ -9,6 +9,26 @@ struct Equipo: Identifiable, Codable, Hashable {
     var direccion: String
     /// MAC de la tarjeta de red, para encenderlo con Wake-on-LAN (opcional).
     var mac: String = ""
+    /// IP pública (o nombre DDNS) de la casa del equipo, para encenderlo desde fuera.
+    /// La app la aprende sola de Tailscale mientras el equipo está en línea.
+    var publica: String = ""
+    /// Puerto UDP abierto en el router de la casa hacia el equipo (Wake-on-WAN).
+    var puertoWOL: Int = 9
+
+    init(nombre: String, direccion: String, mac: String = "") {
+        self.nombre = nombre; self.direccion = direccion; self.mac = mac
+    }
+
+    // Los equipos guardados por versiones anteriores no traen los campos nuevos
+    init(from d: Decoder) throws {
+        let c = try d.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        nombre = try c.decode(String.self, forKey: .nombre)
+        direccion = try c.decode(String.self, forKey: .direccion)
+        mac = try c.decodeIfPresent(String.self, forKey: .mac) ?? ""
+        publica = try c.decodeIfPresent(String.self, forKey: .publica) ?? ""
+        puertoWOL = try c.decodeIfPresent(Int.self, forKey: .puertoWOL) ?? 9
+    }
 }
 
 enum Estado: Equatable {
@@ -52,6 +72,7 @@ final class Almacen: ObservableObject {
 
     func actualizar() {
         tailscaleIP = Red.ipTailscale()
+        aprenderIPsPublicas()
         for equipo in equipos {
             if case .despertando = estados[equipo.id] { continue }
             if estados[equipo.id] == nil { estados[equipo.id] = .revisando }
@@ -85,15 +106,39 @@ final class Almacen: ObservableObject {
             aviso = "Falta la MAC de «\(e.nombre)». Edítalo y escríbela (ej. AA:BB:CC:DD:EE:FF)."
             return
         }
-        let enviados = Red.enviarWOL(mac: mac, ipEquipo: e.direccion)
-        if enviados == 0 {
-            aviso = "No pude enviar la señal de encendido."
-            return
+        let publica = e.publica.trimmingCharacters(in: .whitespaces)
+        let puerto = UInt16(clamping: e.puertoWOL)
+        Task.detached {
+            let enviados = Red.enviarWOL(mac: mac, ipEquipo: e.direccion)
+            let porInternet = publica.isEmpty ? 0 : Red.enviarWOLPorInternet(mac: mac, host: publica, puerto: puerto)
+            await MainActor.run {
+                if enviados + porInternet == 0 {
+                    self.aviso = "No pude enviar la señal de encendido."
+                    return
+                }
+                self.aviso = porInternet > 0
+                    ? "Señal enviada a tu casa (\(publica), puerto \(puerto)) y a esta red. Si no prende en 2 minutos, revisa el puerto del router (ver docs/ENCENDIDO-REMOTO.md)."
+                    : "Señal enviada solo a esta red: falta la IP pública de la casa de «\(e.nombre)» (se aprende sola cuando el equipo está en línea con Tailscale)."
+                self.esperarEncendido(e, restantes: 120)
+            }
         }
-        aviso = Red.estoyEnLaRedDe(e.direccion)
-            ? nil
-            : "Señal enviada. Ojo: si esta Mac no está en la misma red que «\(e.nombre)», la señal no le llega estando apagado (ver README)."
-        esperarEncendido(e, restantes: 120)
+    }
+
+    /// Mientras un equipo está en línea, Tailscale sabe desde qué IP pública conecta:
+    /// la guardamos para poder mandarle la señal de encendido cuando esté apagado.
+    private func aprenderIPsPublicas() {
+        let direcciones = equipos.map(\.direccion)
+        Task.detached {
+            let vistas = Red.ipsPublicasTailscale(de: direcciones)
+            guard !vistas.isEmpty else { return }
+            await MainActor.run {
+                for (i, e) in self.equipos.enumerated() {
+                    if let ip = vistas[e.direccion], ip != e.publica, !Red.esNombre(e.publica) {
+                        self.equipos[i].publica = ip
+                    }
+                }
+            }
+        }
     }
 
     private func esperarEncendido(_ e: Equipo, restantes: Int) {

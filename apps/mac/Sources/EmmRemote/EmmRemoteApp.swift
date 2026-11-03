@@ -118,7 +118,8 @@ struct Tarjeta: View {
                     Circle().fill(colorEstado).frame(width: 8, height: 8)
                     Text(textoEstado).font(.caption).foregroundStyle(.secondary)
                 }
-                Text(equipo.direccion).font(.caption.monospaced()).foregroundStyle(.tertiary)
+                Text(equipo.publica.isEmpty ? equipo.direccion : "\(equipo.direccion) · casa \(equipo.publica)")
+                    .font(.caption.monospaced()).foregroundStyle(.tertiary)
             }
             Spacer()
             if estado == .enLinea {
@@ -181,6 +182,7 @@ struct Editor: View {
     private var valido: Bool {
         !e.nombre.trimmingCharacters(in: .whitespaces).isEmpty && Red.numero(e.direccion) != nil
             && (e.mac.isEmpty || Red.parsearMAC(e.mac) != nil)
+            && (1...65535).contains(e.puertoWOL)
     }
 
     var body: some View {
@@ -190,9 +192,11 @@ struct Editor: View {
                 TextField("Nombre", text: $e.nombre, prompt: Text("PC Casa"))
                 TextField("IP de Tailscale", text: $e.direccion, prompt: Text("100.x.y.z"))
                 TextField("MAC (para encenderlo)", text: $e.mac, prompt: Text("AA:BB:CC:DD:EE:FF"))
+                TextField("IP pública de su casa", text: $e.publica, prompt: Text("Se llena sola · o un nombre DDNS"))
+                TextField("Puerto del router", value: $e.puertoWOL, format: .number.grouping(.never))
             }
-            Text("La IP la ves en la app de Tailscale. La MAC, en Windows con «getmac /v» (la de la tarjeta por cable).")
-                .font(.caption).foregroundStyle(.secondary)
+            Text("La IP la ves en la app de Tailscale. La MAC, en Windows con «getmac /v» (la de la tarjeta por cable). La IP pública se aprende sola mientras el equipo está en línea; el puerto es el que abriste en el router para encenderlo desde fuera.")
+                .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             HStack {
                 Spacer()
                 Button("Cancelar") { cerrar() }.keyboardShortcut(.cancelAction)

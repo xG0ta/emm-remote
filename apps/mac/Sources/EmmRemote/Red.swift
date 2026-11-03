@@ -105,7 +105,7 @@ enum Red {
     /// Devuelve cuántos envíos salieron.
     @discardableResult
     static func enviarWOL(mac: [UInt8], ipEquipo: String) -> Int {
-        let paquete = [UInt8](repeating: 0xFF, count: 6) + Array([[UInt8]](repeating: mac, count: 16).joined())
+        let paquete = paqueteMagico(mac)
         var destinos = Set<in_addr_t>([INADDR_BROADCAST])
         for i in interfacesIPv4() { if let b = i.difusion { destinos.insert(b) } }
         if let n = numero(ipEquipo) { destinos.insert(n) }
@@ -133,5 +133,91 @@ enum Red {
             }
         }
         return enviados
+    }
+
+    static func paqueteMagico(_ mac: [UInt8]) -> [UInt8] {
+        [UInt8](repeating: 0xFF, count: 6) + Array([[UInt8]](repeating: mac, count: 16).joined())
+    }
+
+    /// Wake-on-WAN: manda el paquete mágico a la IP pública (o nombre DDNS) de la casa,
+    /// al puerto UDP que el router reenvía hacia el equipo. Lo manda 3 veces por si se pierde.
+    @discardableResult
+    static func enviarWOLPorInternet(mac: [UInt8], host: String, puerto: UInt16) -> Int {
+        guard let ip = resolverIPv4(host) else { return 0 }
+        let paquete = paqueteMagico(mac)
+        let s = socket(AF_INET, SOCK_DGRAM, 0)
+        guard s >= 0 else { return 0 }
+        defer { close(s) }
+        var dir = sockaddr_in()
+        dir.sin_family = sa_family_t(AF_INET)
+        dir.sin_port = puerto.bigEndian
+        dir.sin_addr.s_addr = ip
+        var enviados = 0
+        for _ in 0..<3 {
+            let r = paquete.withUnsafeBytes { buf in
+                withUnsafePointer(to: &dir) {
+                    $0.withMemoryRebound(to: sockaddr.self, capacity: 1) {
+                        sendto(s, buf.baseAddress, buf.count, 0, $0, socklen_t(MemoryLayout<sockaddr_in>.size))
+                    }
+                }
+            }
+            if r == paquete.count { enviados += 1 }
+            usleep(150_000)
+        }
+        return enviados
+    }
+
+    /// IPv4 de un texto «a.b.c.d» o de un nombre (DDNS) vía DNS.
+    static func resolverIPv4(_ host: String) -> in_addr_t? {
+        if let n = numero(host) { return n }
+        var pistas = addrinfo()
+        pistas.ai_family = AF_INET
+        pistas.ai_socktype = SOCK_DGRAM
+        var res: UnsafeMutablePointer<addrinfo>?
+        guard getaddrinfo(host, nil, &pistas, &res) == 0, let r = res else { return nil }
+        defer { freeaddrinfo(res) }
+        return r.pointee.ai_addr.withMemoryRebound(to: sockaddr_in.self, capacity: 1) { $0.pointee.sin_addr.s_addr }
+    }
+
+    /// ¿Es un nombre (DDNS) y no una IP? Entonces lo escribió el usuario y no se reemplaza.
+    static func esNombre(_ s: String) -> Bool { !s.isEmpty && numero(s) == nil }
+
+    /// ¿IPv4 pública? (fuera de redes privadas, CGNAT/Tailscale, locales y de enlace)
+    static func esPublica(_ ip: String) -> Bool {
+        guard let n = numero(ip) else { return false }
+        let h = UInt32(bigEndian: n)
+        let privadas: [(UInt32, UInt32)] = [
+            (0x0A00_0000, 0xFF00_0000), (0xAC10_0000, 0xFFF0_0000), (0xC0A8_0000, 0xFFFF_0000),
+            (0x6440_0000, 0xFFC0_0000), (0x7F00_0000, 0xFF00_0000), (0xA9FE_0000, 0xFFFF_0000),
+        ]
+        return !privadas.contains { h & $0.1 == $0.0 }
+    }
+
+    /// Para cada IP de Tailscale dada, la IPv4 pública desde la que conecta ahora ese equipo
+    /// (según «tailscale status»: «direct a.b.c.d:puerto»). Solo equipos en línea y con conexión directa.
+    static func ipsPublicasTailscale(de direcciones: [String]) -> [String: String] {
+        let cli = "/Applications/Tailscale.app/Contents/MacOS/Tailscale"
+        guard FileManager.default.isExecutableFile(atPath: cli) else { return [:] }
+        let p = Process()
+        p.executableURL = URL(fileURLWithPath: cli)
+        p.arguments = ["status"]
+        let tubo = Pipe()
+        p.standardOutput = tubo
+        p.standardError = FileHandle.nullDevice
+        do { try p.run() } catch { return [:] }
+        let datos = tubo.fileHandleForReading.readDataToEndOfFile()
+        p.waitUntilExit()
+        let texto = String(decoding: datos, as: UTF8.self)
+        var vistas: [String: String] = [:]
+        for linea in texto.split(separator: "\n") {
+            let partes = linea.split(separator: " ", omittingEmptySubsequences: true).map(String.init)
+            guard let ip = partes.first, direcciones.contains(ip),
+                  let i = partes.firstIndex(where: { $0.hasPrefix("direct") }), i + 1 < partes.count else { continue }
+            let extremo = partes[i + 1].trimmingCharacters(in: CharacterSet(charactersIn: ","))
+            guard !extremo.hasPrefix("["), let host = extremo.split(separator: ":").first.map(String.init),
+                  esPublica(host) else { continue }
+            vistas[ip] = host
+        }
+        return vistas
     }
 }
