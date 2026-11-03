@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 
 /// Un equipo que se puede controlar. Se guarda en
@@ -52,11 +53,18 @@ final class Almacen: ObservableObject {
         return base.appendingPathComponent("equipos.json")
     }()
     private var temporizador: Timer?
+    /// true si Emm Remote encendió Tailscale: entonces lo apaga al salir.
+    private var encendiTailscale = false
+    nonisolated static let tailscaleCLI = "/Applications/Tailscale.app/Contents/MacOS/Tailscale"
 
     init() {
         if let data = try? Data(contentsOf: archivo),
            let lista = try? JSONDecoder().decode([Equipo].self, from: data) {
             equipos = lista
+        }
+        if Red.ipTailscale() == nil { conectarTailscale() }
+        NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification, object: nil, queue: nil) { [weak self] _ in
+            MainActor.assumeIsolated { self?.alSalir() }
         }
         actualizar()
         temporizador = Timer.scheduledTimer(withTimeInterval: 10, repeats: true) { [weak self] _ in
@@ -171,5 +179,40 @@ final class Almacen: ObservableObject {
 
     func abrirTailscale() {
         NSWorkspaceAbrir.app("/Applications/Tailscale.app")
+    }
+
+    /// Enciende Tailscale sin abrir su app (la extensión de red sigue instalada en la Mac).
+    func conectarTailscale() {
+        guard FileManager.default.isExecutableFile(atPath: Self.tailscaleCLI) else {
+            aviso = "No encuentro Tailscale en Aplicaciones."
+            return
+        }
+        aviso = "Conectando Tailscale…"
+        Task.detached {
+            let ok = Self.correrTailscale(["up"], espera: 30)
+            await MainActor.run {
+                self.encendiTailscale = ok
+                self.aviso = ok ? nil : "No pude conectar Tailscale solo. Ábrelo y revisa que tengas sesión iniciada."
+                self.actualizar()
+            }
+        }
+    }
+
+    /// Al cerrar Emm Remote: si fue la app la que encendió Tailscale, lo apaga.
+    private func alSalir() {
+        if encendiTailscale { _ = Self.correrTailscale(["down"], espera: 5) }
+    }
+
+    nonisolated static func correrTailscale(_ args: [String], espera: TimeInterval) -> Bool {
+        let p = Process()
+        p.executableURL = URL(fileURLWithPath: tailscaleCLI)
+        p.arguments = args
+        p.standardOutput = FileHandle.nullDevice
+        p.standardError = FileHandle.nullDevice
+        do { try p.run() } catch { return false }
+        let limite = Date().addingTimeInterval(espera)
+        while p.isRunning && Date() < limite { usleep(100_000) }
+        if p.isRunning { p.terminate(); return false }
+        return p.terminationStatus == 0
     }
 }

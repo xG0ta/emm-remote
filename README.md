@@ -50,6 +50,7 @@ Lo mismo que AnyDesk o TeamViewer en lo importante, porque por dentro usa [RustD
 
 Un lanzador propio encima de RustDesk: muestra tus equipos, si están en línea y botones **Conectar**, **Archivos** y **Despertar**. También vive en la barra de menú.
 
+- **Tailscale automático:** al abrir Emm Remote se conecta Tailscale (sin abrir su app) y al salir se desconecta, si fue la app la que lo conectó. En la PC Windows, Tailscale corre como servicio y no hay que abrirlo.
 - Compilar e instalar: `bash apps/mac/construir.sh --instalar` → `/Applications/Emm Remote.app`
 - Logo (la «e» de Emm con la gota de agua): 3 diseños en `apps/mac/logos/` (1 «e» con gota que escurre, 2 gota con la «e» dentro, 3 monitor con la «e» y gota). Para cambiarlo: `LOGO=2 bash apps/mac/construir.sh --instalar`.
 - Tus equipos se guardan en `~/Library/Application Support/Emm Remote/equipos.json` (no se suben a Git).

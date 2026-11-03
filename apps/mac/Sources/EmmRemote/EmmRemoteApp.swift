@@ -85,7 +85,7 @@ struct Principal: View {
                         Label("Tailscale apagado: fuera de casa no vas a poder conectarte",
                               systemImage: "exclamationmark.triangle.fill")
                             .font(.caption).foregroundStyle(.orange)
-                        Button("Abrir Tailscale") { almacen.abrirTailscale() }
+                        Button("Conectar Tailscale") { almacen.conectarTailscale() }
                             .controlSize(.small)
                     }
                 }
@@ -122,22 +122,19 @@ struct Tarjeta: View {
                     .font(.caption.monospaced()).foregroundStyle(.tertiary)
             }
             Spacer()
-            if estado == .enLinea {
-                Button("Archivos") { almacen.archivos(equipo) }
-                Button("Conectar") { almacen.conectar(equipo) }
-                    .buttonStyle(.borderedProminent).tint(colorEmm)
-                    .keyboardShortcut(.defaultAction)
-            } else {
-                Button {
-                    almacen.despertar(equipo)
-                } label: { Label("Despertar", systemImage: "power") }
-                    .buttonStyle(.borderedProminent).tint(colorEmm)
-                    .disabled(equipo.mac.isEmpty || { if case .despertando = estado { return true }; return false }())
-                    .help(equipo.mac.isEmpty ? "Agrega la MAC del equipo para encenderlo" : "Enviar señal Wake-on-LAN")
-            }
+            Button {
+                almacen.despertar(equipo)
+            } label: { Label("Despertar", systemImage: "power") }
+                .disabled(equipo.mac.isEmpty || { if case .despertando = estado { return true }; return false }())
+                .help(equipo.mac.isEmpty ? "Agrega la MAC del equipo para encenderlo" : "Encender el equipo (Wake-on-LAN)")
+            Button("Archivos") { almacen.archivos(equipo) }
+                .disabled(estado != .enLinea)
+            Button("Conectar") { almacen.conectar(equipo) }
+                .buttonStyle(.borderedProminent).tint(colorEmm)
+                .keyboardShortcut(.defaultAction)
+                .disabled(estado != .enLinea)
             Menu {
                 Button("Editar…", action: editar)
-                Button("Despertar (Wake-on-LAN)") { almacen.despertar(equipo) }.disabled(equipo.mac.isEmpty)
                 Divider()
                 Button("Quitar", role: .destructive) { almacen.equipos.removeAll { $0.id == equipo.id } }
             } label: { Image(systemName: "ellipsis.circle") }
