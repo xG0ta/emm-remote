@@ -51,6 +51,7 @@ Lo mismo que AnyDesk o TeamViewer en lo importante, porque por dentro usa [RustD
 Un lanzador propio encima de RustDesk: muestra tus equipos, si están en línea y botones **Conectar**, **Archivos** y **Despertar**. También vive en la barra de menú.
 
 - Compilar e instalar: `bash apps/mac/construir.sh --instalar` → `/Applications/Emm Remote.app`
+- Logo: 3 diseños en `apps/mac/logos/` (1 monitor con señal, 2 puntero, 3 encendido). Para cambiarlo: `LOGO=2 bash apps/mac/construir.sh --instalar`.
 - Tus equipos se guardan en `~/Library/Application Support/Emm Remote/equipos.json` (no se suben a Git).
 - **Conectar / Archivos** abren RustDesk directo al equipo (`--connect` / `--file-transfer`). Si guardaste la contraseña en RustDesk («Recordar contraseña»), entra con un clic.
 - **En línea** = RustDesk responde en el puerto 21118 por Tailscale. Arriba se ve si Tailscale de la Mac está conectado.

@@ -1,6 +1,7 @@
 #!/bin/bash
 # Compila el lanzador y arma "Emm Remote.app" en apps/mac/build/.
-# Uso: bash apps/mac/construir.sh [--instalar]   (--instalar lo copia a /Applications)
+# Uso: [LOGO=1|2|3] bash apps/mac/construir.sh [--instalar]   (--instalar lo copia a /Applications)
+# LOGO elige el diseño del ícono (ver apps/mac/logos/); por omisión, 1.
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -14,7 +15,7 @@ cp "$BIN" "$APP/Contents/MacOS/EmmRemote"
 
 # Ícono: se dibuja con el script icono.swift y se convierte a .icns
 TMP="$(mktemp -d)"
-swift icono.swift "$TMP/icono.png"
+swift icono.swift "$TMP/icono.png" "${LOGO:-1}"
 ICONSET="$TMP/EmmRemote.iconset"; mkdir -p "$ICONSET"
 for s in 16 32 128 256 512; do
   sips -z $s $s "$TMP/icono.png" --out "$ICONSET/icon_${s}x${s}.png" >/dev/null
@@ -33,8 +34,8 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
   <key>CFBundleExecutable</key><string>EmmRemote</string>
   <key>CFBundleIconFile</key><string>EmmRemote</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleShortVersionString</key><string>0.2.0</string>
-  <key>CFBundleVersion</key><string>2</string>
+  <key>CFBundleShortVersionString</key><string>0.3.0</string>
+  <key>CFBundleVersion</key><string>3</string>
   <key>LSMinimumSystemVersion</key><string>13.0</string>
   <key>NSHighResolutionCapable</key><true/>
   <key>NSLocalNetworkUsageDescription</key><string>Emm Remote revisa si tus equipos están en línea y envía la señal para encenderlos (Wake-on-LAN).</string>
