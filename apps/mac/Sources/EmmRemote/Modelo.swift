@@ -86,7 +86,21 @@ final class Almacen: ObservableObject {
 
     // MARK: Acciones
 
-    func conectar(_ e: Equipo) { abrirRustDesk(["--connect", e.direccion]) }
+    func conectar(_ e: Equipo) {
+        pantallaAjustable(e.direccion)
+        abrirRustDesk(["--connect", e.direccion])
+    }
+
+    /// RustDesk recuerda por equipo la escala «original» (la PC se ve chica en ventana grande):
+    /// la cambiamos a «adaptable» para que la pantalla remota se ajuste al tamaño de la ventana.
+    private func pantallaAjustable(_ direccion: String) {
+        let archivo = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Preferences/com.carriez.RustDesk/peers/\(direccion).toml")
+        guard let texto = try? String(contentsOf: archivo, encoding: .utf8),
+              texto.contains("view_style = 'original'") else { return }
+        try? texto.replacingOccurrences(of: "view_style = 'original'", with: "view_style = 'adaptive'")
+            .write(to: archivo, atomically: true, encoding: .utf8)
+    }
     func archivos(_ e: Equipo) { abrirRustDesk(["--file-transfer", e.direccion]) }
 
     private func abrirRustDesk(_ args: [String]) {
