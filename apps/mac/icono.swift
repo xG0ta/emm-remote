@@ -1,9 +1,10 @@
 // Dibuja el ícono de Emm Remote (1024×1024) con la gota de agua.
 // Uso: swift icono.swift salida.png [1|2|3]
-//   1 = vidrio: monitor translúcido con gota sobre degradado rojo-vino
-//   2 = gota protagonista: gota grande con monitor dentro, fondo oscuro con brillo
-//   3 = degradado rojo→azul: monitor blanco con gota blanca
+//   1 = «e» blanca gigante con una gota azul que escurre, fondo rojo
+//   2 = gota azul con la «e» dentro, fondo oscuro
+//   3 = monitor de vidrio con la «e» y una gota en la esquina
 import AppKit
+import CoreText
 
 let salida = CommandLine.arguments[1]
 let opcion = CommandLine.arguments.count > 2 ? Int(CommandLine.arguments[2]) ?? 1 : 1
@@ -99,72 +100,45 @@ func brilloSuperior(_ alfa: CGFloat) {
     }
 }
 
+/// La «e» de Emm como trazo vectorial (SF Rounded, muy gruesa), centrada en c con la altura dada.
+func letraE(centro c: NSPoint, alto: CGFloat) -> NSBezierPath {
+    let base = NSFont.systemFont(ofSize: 1000, weight: .black)
+    let fuente = NSFont(descriptor: base.fontDescriptor.withDesign(.rounded) ?? base.fontDescriptor, size: 1000) ?? base
+    var unichar: UniChar = 0x65  // «e»
+    var glifo: CGGlyph = 0
+    CTFontGetGlyphsForCharacters(fuente as CTFont, &unichar, &glifo, 1)
+    let p = NSBezierPath()
+    p.move(to: .zero)
+    p.append(withCGGlyph: glifo, in: fuente)
+    let b = p.bounds
+    let k = alto / b.height
+    var t = AffineTransform(translationByX: c.x, byY: c.y)
+    t.scale(k)
+    t.translate(x: -b.midX, y: -b.midY)
+    p.transform(using: t)
+    return p
+}
+
 switch opcion {
 case 2:
-    // Fondo casi negro con un resplandor rojo Emm abajo y azul arriba
-    NSGradient(starting: rgb(28, 30, 42), ending: rgb(8, 9, 14))!.draw(in: fondo, angle: -90)
+    // Gota azul brillante como ícono completo, con la «e» blanca dentro; fondo oscuro con brillo rojo
+    NSGradient(starting: rgb(30, 32, 46), ending: rgb(10, 11, 17))!.draw(in: fondo, angle: -90)
     recortado(fondo) {
-        NSGradient(starting: rgb(235, 45, 70, 0.75), ending: rgb(235, 45, 70, 0))!
-            .draw(fromCenter: NSPoint(x: 512, y: 150), radius: 0, toCenter: NSPoint(x: 512, y: 150), radius: 520, options: [])
-        NSGradient(starting: rgb(40, 140, 255, 0.35), ending: rgb(40, 140, 255, 0))!
-            .draw(fromCenter: NSPoint(x: 512, y: 760), radius: 0, toCenter: NSPoint(x: 512, y: 760), radius: 420, options: [])
+        NSGradient(starting: rgb(235, 45, 70, 0.6), ending: rgb(235, 45, 70, 0))!
+            .draw(fromCenter: NSPoint(x: 512, y: 130), radius: 0, toCenter: NSPoint(x: 512, y: 130), radius: 520, options: [])
     }
-    // Órbita roja alrededor de la gota: «conexión remota»
-    let orbita = NSBezierPath(ovalIn: NSRect(x: 190, y: 330, width: 644, height: 300))
-    orbita.transform(using: {
-        var t = AffineTransform(translationByX: -512, byY: -480)
-        t.append(AffineTransform(rotationByDegrees: -18))
-        t.append(AffineTransform(translationByX: 512, byY: 480))
-        return t
-    }())
-    orbita.lineWidth = 22
-    conSombra(rgb(255, 60, 80, 0.8), desplazamiento: 0, difuminado: 30) {
-        rgb(255, 75, 95).setStroke(); orbita.stroke()
+    gotaBrillante(centro: NSPoint(x: 512, y: 375), radio: 245, destello: false)
+    let e = letraE(centro: NSPoint(x: 522, y: 350), alto: 215)
+    conSombra(rgb(0, 30, 100, 0.45), desplazamiento: 8, difuminado: 18) {
+        NSColor.white.setFill(); e.fill()
     }
-    gotaBrillante(centro: NSPoint(x: 512, y: 400), radio: 200, destello: false)
-    // La parte de la órbita que pasa por delante
-    recortado(NSBezierPath(rect: NSRect(x: 100, y: 100, width: 824, height: 330))) {
-        rgb(255, 75, 95).setStroke(); orbita.stroke()
-    }
-    // Monitor blanco dentro de la gota
-    let (pantalla, pie) = caminoMonitor(NSRect(x: 412, y: 400, width: 200, height: 140), radio: 22)
-    pie.transform(using: {
-        var t = AffineTransform(translationByX: 512, byY: 400)
-        t.scale(0.5)
-        t.translate(x: -512, y: -400)
-        return t
-    }())
-    conSombra(rgb(0, 30, 90, 0.5), desplazamiento: 6, difuminado: 14) {
-        NSColor.white.setStroke(); pantalla.lineWidth = 22; pantalla.stroke()
-        NSColor.white.setFill(); pie.fill()
-    }
-    brilloSuperior(0.07)
+    brilloSuperior(0.06)
 case 3:
-    // Degradado diagonal rojo Emm → azul gota
-    NSGradient(colors: [rgb(255, 70, 85), rgb(200, 40, 120), rgb(40, 110, 245)],
-               atLocations: [0, 0.5, 1], colorSpace: .deviceRGB)!.draw(in: fondo, angle: -45)
-    brilloSuperior(0.18)
-    let r = NSRect(x: 222, y: 400, width: 580, height: 390)
-    let (pantalla, pie) = caminoMonitor(r, radio: 60)
-    conSombra(rgb(30, 0, 60, 0.35), desplazamiento: 18, difuminado: 40) {
-        NSColor.white.setStroke(); pantalla.lineWidth = 46; pantalla.stroke()
-        NSColor.white.setFill(); pie.fill()
-        gota(centro: NSPoint(x: 512, y: 540), radio: 92).fill()
-    }
-    // Brillo en la gota blanca
-    rgb(120, 90, 220, 0.35).setFill()
-    NSBezierPath(ovalIn: NSRect(x: 455, y: 560, width: 34, height: 64)).fill()
-default:
-    // Degradado rojo-vino con brillo de cristal
+    // Pantalla de vidrio con la «e» y una gota que cae de la esquina: monitor + marca Gota
     NSGradient(colors: [rgb(255, 92, 102), rgb(214, 30, 60), rgb(110, 12, 48)],
                atLocations: [0, 0.5, 1], colorSpace: .deviceRGB)!.draw(in: fondo, angle: -60)
-    recortado(fondo) {
-        NSGradient(starting: rgb(255, 180, 160, 0.45), ending: rgb(255, 180, 160, 0))!
-            .draw(fromCenter: NSPoint(x: 260, y: 860), radius: 0, toCenter: NSPoint(x: 260, y: 860), radius: 560, options: [])
-    }
-    let r = NSRect(x: 200, y: 390, width: 624, height: 420)
+    let r = NSRect(x: 190, y: 380, width: 600, height: 420)
     let (pantalla, pie) = caminoMonitor(r, radio: 64)
-    // Pantalla de vidrio esmerilado
     conSombra(rgb(60, 0, 20, 0.45), desplazamiento: 22, difuminado: 50) {
         rgb(255, 255, 255, 0.16).setFill(); pantalla.fill()
     }
@@ -174,17 +148,28 @@ default:
     rgb(255, 255, 255, 0.95).setStroke(); pantalla.lineWidth = 26; pantalla.stroke()
     conSombra(rgb(60, 0, 20, 0.35), desplazamiento: 10, difuminado: 24) {
         rgb(255, 255, 255, 0.95).setFill(); pie.fill()
+        letraE(centro: NSPoint(x: r.midX, y: r.midY), alto: 250).fill()
     }
-    gotaBrillante(centro: NSPoint(x: 512, y: 540), radio: 112)
-    // Ondas de conexión arriba a la derecha de la pantalla
-    for (i, radio) in [CGFloat(40), 82].enumerated() {
-        let a = NSBezierPath()
-        a.appendArc(withCenter: NSPoint(x: 740, y: 726), radius: radio, startAngle: 5, endAngle: 85)
-        a.lineWidth = 20; a.lineCapStyle = .round
-        rgb(255, 255, 255, i == 0 ? 0.95 : 0.7).setStroke(); a.stroke()
+    gotaBrillante(centro: NSPoint(x: 762, y: 712), radio: 66)
+    brilloSuperior(0.10)
+default:
+    // «e» blanca gigante y una gota azul que escurre de su terminación
+    NSGradient(colors: [rgb(255, 92, 102), rgb(214, 30, 60), rgb(110, 12, 48)],
+               atLocations: [0, 0.5, 1], colorSpace: .deviceRGB)!.draw(in: fondo, angle: -60)
+    recortado(fondo) {
+        NSGradient(starting: rgb(255, 180, 160, 0.45), ending: rgb(255, 180, 160, 0))!
+            .draw(fromCenter: NSPoint(x: 260, y: 860), radius: 0, toCenter: NSPoint(x: 260, y: 860), radius: 560, options: [])
     }
-    rgb(255, 255, 255, 0.95).setFill()
-    NSBezierPath(ovalIn: NSRect(x: 726, y: 712, width: 28, height: 28)).fill()
+    let e = letraE(centro: NSPoint(x: 500, y: 570), alto: 520)
+    conSombra(rgb(60, 0, 20, 0.45), desplazamiento: 22, difuminado: 45) {
+        NSColor.white.setFill(); e.fill()
+    }
+    recortado(e) {
+        NSGradient(starting: rgb(255, 255, 255, 0), ending: rgb(255, 210, 215, 0.6))!.draw(in: e.bounds, angle: -90)
+    }
+    let b = e.bounds
+    let r = CGFloat(66)
+    gotaBrillante(centro: NSPoint(x: b.maxX - 0.14 * b.width, y: b.minY + 0.2 * b.height - 2.05 * r), radio: r)
     brilloSuperior(0.10)
 }
 
