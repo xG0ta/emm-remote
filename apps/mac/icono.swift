@@ -1,6 +1,6 @@
 // Dibuja el ícono de Emm Remote (1024×1024) con la gota de agua.
 // Uso: swift icono.swift salida.png [1|2|3]
-//   1 = «e» blanca gigante con una gota azul que escurre, fondo rojo
+//   1 = «e» blanca centrada con una gota azul que escurre de su punta, fondo rojo
 //   2 = gota azul con la «e» dentro, fondo oscuro
 //   3 = monitor de vidrio con la «e» y una gota en la esquina
 import AppKit
@@ -160,7 +160,8 @@ default:
         NSGradient(starting: rgb(255, 180, 160, 0.45), ending: rgb(255, 180, 160, 0))!
             .draw(fromCenter: NSPoint(x: 260, y: 860), radius: 0, toCenter: NSPoint(x: 260, y: 860), radius: 560, options: [])
     }
-    let e = letraE(centro: NSPoint(x: 500, y: 570), alto: 520)
+    // «e» centrada en el ícono y la gota escurriendo de su punta
+    let e = letraE(centro: NSPoint(x: 512, y: 520), alto: 500)
     conSombra(rgb(60, 0, 20, 0.45), desplazamiento: 22, difuminado: 45) {
         NSColor.white.setFill(); e.fill()
     }
@@ -168,7 +169,7 @@ default:
         NSGradient(starting: rgb(255, 255, 255, 0), ending: rgb(255, 210, 215, 0.6))!.draw(in: e.bounds, angle: -90)
     }
     let b = e.bounds
-    let r = CGFloat(66)
+    let r = CGFloat(62)
     gotaBrillante(centro: NSPoint(x: b.maxX - 0.14 * b.width, y: b.minY + 0.2 * b.height - 2.05 * r), radio: r)
     brilloSuperior(0.10)
 }
